@@ -1,5 +1,5 @@
 // Configurações Globais
-const WHATSAPP_NUMBER = "5591999999999";
+const WHATSAPP_NUMBER = "5594991262090";
 const WHATSAPP_MESSAGE = "Olá! Vim do site da Parafestas e gostaria de solicitar um orçamento.";
 
 // Função auxiliar para tracking
