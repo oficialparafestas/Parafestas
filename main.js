@@ -216,11 +216,11 @@ function initCarousel() {
 function initGallery() {
   const grid = document.getElementById('pinterest-grid');
   const images = [
-    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.47.jpeg' },
-    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.48.jpeg' },
-    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.50(1).jpeg' },
-    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.50(2).jpeg' },
-    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.50.jpeg' }
+    { url: './IMG/GALERIA/galeria-1.jpeg' },
+    { url: './IMG/GALERIA/galeria-2.jpeg' },
+    { url: './IMG/GALERIA/galeria-3.jpeg' },
+    { url: './IMG/GALERIA/galeria-4.jpeg' },
+    { url: './IMG/GALERIA/galeria-5.jpeg' }
   ];
 
   if (grid) {
