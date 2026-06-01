@@ -216,12 +216,11 @@ function initCarousel() {
 function initGallery() {
   const grid = document.getElementById('pinterest-grid');
   const images = [
-    { url: 'https://images.unsplash.com/photo-1530103862676-de3c9de59a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', title: 'Festas Infantis' },
-    { url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', title: 'Casamentos Premium' },
-    { url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', title: 'Arranjos de Balões' },
-    { url: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', title: 'Eventos Corporativos' },
-    { url: 'https://images.unsplash.com/photo-1560155016-bd4879ae8f21?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', title: 'Chá Revelação' },
-    { url: 'https://images.unsplash.com/photo-1555244162-803834f70033?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', title: 'Confeitaria Fina' }
+    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.47.jpeg' },
+    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.48.jpeg' },
+    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.50(1).jpeg' },
+    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.50(2).jpeg' },
+    { url: './IMG/GALERIA/WhatsApp Image 2026-06-01 at 10.23.50.jpeg' }
   ];
 
   if (grid) {
@@ -229,10 +228,7 @@ function initGallery() {
     images.forEach(img => {
       html += `
         <div class="gallery-item">
-          <img src="${img.url}" alt="${img.title}" loading="lazy">
-          <div class="gallery-overlay">
-            <h4>${img.title}</h4>
-          </div>
+          <img src="${img.url}" loading="lazy">
         </div>
       `;
     });
