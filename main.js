@@ -2,6 +2,12 @@
 const WHATSAPP_NUMBER = "5594991262090";
 const WHATSAPP_MESSAGE = "Olá! Vim do site da Parafestas e gostaria de solicitar um orçamento.";
 
+import galeria1 from './IMG/GALERIA/galeria-1.jpeg';
+import galeria2 from './IMG/GALERIA/galeria-2.jpeg';
+import galeria3 from './IMG/GALERIA/galeria-3.jpeg';
+import galeria4 from './IMG/GALERIA/galeria-4.jpeg';
+import galeria5 from './IMG/GALERIA/galeria-5.jpeg';
+
 // Função auxiliar para tracking
 function trackEvent(eventName, eventData = {}) {
   // Push to DataLayer
@@ -216,11 +222,11 @@ function initCarousel() {
 function initGallery() {
   const grid = document.getElementById('pinterest-grid');
   const images = [
-    { url: './IMG/GALERIA/galeria-1.jpeg' },
-    { url: './IMG/GALERIA/galeria-2.jpeg' },
-    { url: './IMG/GALERIA/galeria-3.jpeg' },
-    { url: './IMG/GALERIA/galeria-4.jpeg' },
-    { url: './IMG/GALERIA/galeria-5.jpeg' }
+    { url: galeria1 },
+    { url: galeria2 },
+    { url: galeria3 },
+    { url: galeria4 },
+    { url: galeria5 }
   ];
 
   if (grid) {

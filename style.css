@@ -4,7 +4,7 @@
   --color-pink-light: #FF69B4;
   --color-orange: #FF8C00;
   --color-yellow: #FFD700;
-  --color-blue: #004AAD; /* Brand Blue */
+  --color-blue: #15c9cd; /* Brand Blue */
   --color-white: #FFFFFF;
   
   /* Neutral Colors */
@@ -151,7 +151,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Top Trust Bar */
 .top-bar {
   background-color: var(--color-blue);
-  color: var(--color-white);
+  color: var(--color-dark);
+  font-weight: 600;
   font-size: 0.85rem;
   padding: 8px 0;
   text-align: center;
