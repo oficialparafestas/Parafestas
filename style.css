@@ -690,8 +690,8 @@ input:focus, select:focus {
 
 /* Footer */
 .footer {
-  background: #EAEAEA;
-  color: var(--color-dark-gray);
+  background: #f14902;
+  color: var(--color-white);
   padding: 80px 0 40px;
 }
 
@@ -707,7 +707,7 @@ input:focus, select:focus {
 }
 
 .footer-brand p {
-  color: var(--color-gray);
+  color: rgba(255, 255, 255, 0.9);
   max-width: 300px;
   margin-bottom: 20px;
 }
@@ -736,7 +736,7 @@ input:focus, select:focus {
 .footer h3 {
   font-size: 1.2rem;
   margin-bottom: 20px;
-  color: var(--color-dark);
+  color: var(--color-white);
 }
 
 .footer-links {
@@ -755,16 +755,16 @@ input:focus, select:focus {
 }
 
 .footer-contact p {
-  color: var(--color-dark-gray);
+  color: var(--color-white);
   margin-bottom: 10px;
 }
 
 .footer-bottom {
-  border-top: 1px solid #D0D0D0;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
   padding: 20px 0 0;
   margin-top: 40px;
   text-align: center;
-  color: var(--color-gray);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
 }
 
