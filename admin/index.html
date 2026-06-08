@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Dashboard - Parafestas Admin</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/admin-style.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">Parafestas Admin</div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-view="dashboard">Dashboard</a>
+        <a href="#" class="nav-item" data-view="leads">Leads & Contatos</a>
+        <a href="#" class="nav-item" data-view="analytics">Analytics & Eventos</a>
+        <a href="#" class="nav-item" data-view="config" id="nav-config">Configurações</a>
+      </nav>
+      <div class="sidebar-footer">
+        <span id="user-role" style="color: var(--admin-text-light); font-size: 12px;"></span>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <h2 id="page-title">Dashboard</h2>
+        <div class="header-user">
+          <span id="user-email"></span>
+          <button class="logout-btn" id="logout-btn">Sair</button>
+        </div>
+      </header>
+
+      <div class="admin-content" id="content-area">
+        <!-- Views injetadas via JS -->
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./js/admin-main.js"></script>
+</body>
+</html>

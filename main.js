@@ -8,8 +8,87 @@ import galeria3 from './IMG/GALERIA/galeria-3.jpeg';
 import galeria4 from './IMG/GALERIA/galeria-4.jpeg';
 import galeria5 from './IMG/GALERIA/galeria-5.jpeg';
 
+// Função auxiliar para UTMs e Scoring
+function initTrackingSystem() {
+  // Captura UTMs da URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const utms = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  let currentUtms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
+  
+  let updated = false;
+  utms.forEach(utm => {
+    if (urlParams.has(utm)) {
+      currentUtms[utm] = urlParams.get(utm);
+      updated = true;
+    }
+  });
+  
+  if (updated) {
+    localStorage.setItem('pf_utms', JSON.stringify(currentUtms));
+  }
+
+  // Gera Session ID
+  if (!sessionStorage.getItem('pf_session_id')) {
+    sessionStorage.setItem('pf_session_id', 'sess_' + Date.now());
+  }
+}
+
+// Retorna Score atual
+function getLeadScore() {
+  return parseInt(localStorage.getItem('pf_lead_score') || '0');
+}
+
+// Incrementa Score
+function addScore(points) {
+  let score = getLeadScore();
+  score += points;
+  localStorage.setItem('pf_lead_score', score);
+}
+
+// Mock DB Save Event
+function saveEventToDB(eventName, eventData = {}) {
+  const events = JSON.parse(localStorage.getItem('pf_events') || '[]');
+  const utms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
+  const sessionId = sessionStorage.getItem('pf_session_id');
+  
+  events.push({
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    eventName,
+    sessionId,
+    url: window.location.pathname,
+    data: { ...eventData, ...utms }
+  });
+  localStorage.setItem('pf_events', JSON.stringify(events));
+}
+
+// Save Lead to DB
+export function saveLeadToDB(leadData) {
+  const leads = JSON.parse(localStorage.getItem('pf_leads') || '[]');
+  const utms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
+  
+  leads.push({
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    ...leadData,
+    ...utms,
+    score: getLeadScore()
+  });
+  
+  localStorage.setItem('pf_leads', JSON.stringify(leads));
+}
+
 // Função auxiliar para tracking
 function trackEvent(eventName, eventData = {}) {
+  // Score System
+  if (eventName === 'PageView') addScore(5);
+  if (eventName === 'Scroll50') addScore(10);
+  if (eventName === 'Scroll100') addScore(20);
+  if (eventName === 'InstagramClick') addScore(15);
+  if (eventName === 'WhatsappClick') addScore(30);
+  if (eventName === 'FormStart') addScore(40);
+  if (eventName === 'Lead') addScore(100);
+
   // Push to DataLayer
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({ event: eventName, ...eventData });
@@ -23,10 +102,14 @@ function trackEvent(eventName, eventData = {}) {
     }
   }
   
-  console.log(`[Tracking] ${eventName}`, eventData); // Apenas para debug no console
+  // Save to Admin Panel DB
+  saveEventToDB(eventName, eventData);
+  console.log(`[Tracking] ${eventName} | Score: ${getLeadScore()}`);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initTrackingSystem();
+  
   initWhatsAppLinks();
   initHeaderScroll();
   initMobileMenu();
@@ -37,8 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initWeb3Forms();
   initScrollTracking();
   
-  // Track ViewContent on load
-  trackEvent('ViewContent');
+  trackEvent('PageView');
 });
 
 // 1. WhatsApp Links Formatter
@@ -350,6 +432,9 @@ function initWeb3Forms() {
             event_type: object.event_type,
             budget: object.budget || 'N/A'
           });
+
+          // Save Lead to DB
+          saveLeadToDB(object);
 
         } else {
           console.error(result);
