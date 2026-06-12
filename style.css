@@ -773,11 +773,15 @@ input:focus, select:focus {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  width: 60px;
+  width: auto;
   height: 60px;
+  padding: 0 24px;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 1.1rem;
   background-color: #25D366;
   color: white;
-  border-radius: 50%;
+  border-radius: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -788,7 +792,7 @@ input:focus, select:focus {
 }
 
 .floating-whatsapp:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 @keyframes pulse {

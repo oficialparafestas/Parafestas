@@ -175,9 +175,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function initClickTracking() {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const waBaseUrl = isMobile ? 'whatsapp://send' : 'https://web.whatsapp.com/send';
-  const finalUrl = `${waBaseUrl}?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
   
   document.querySelectorAll('[data-action="whatsapp"]').forEach(el => {
+    const customMessage = el.getAttribute('data-message') || WHATSAPP_MESSAGE;
+    const finalUrl = `${waBaseUrl}?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(customMessage)}`;
+    
     el.href = finalUrl;
     if(!isMobile) el.target = "_blank";
     
