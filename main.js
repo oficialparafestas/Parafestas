@@ -62,6 +62,50 @@ function saveEventToDB(eventName, eventData = {}) {
   localStorage.setItem('pf_events', JSON.stringify(events));
 }
 
+// Envia evento para a Conversions API (CAPI) do Facebook
+async function sendCAPIEvent(eventName, eventData = {}, eventId) {
+  try {
+    const PIXEL_ID = window.META_PIXEL_ID;
+    const CAPI_TOKEN = window.META_CAPI_TOKEN;
+    
+    if (!PIXEL_ID || !CAPI_TOKEN) return;
+
+    // Converte os dados do Lead para o formato do Facebook se aplicável
+    let userData = {
+      client_user_agent: navigator.userAgent,
+      client_ip_address: "" // IP não está disponível via frontend puro
+    };
+
+    if (eventName === 'Lead' && eventData.email) {
+      // Idealmente deve ser feito hash SHA256 no frontend, 
+      // mas como é estático, o FB vai exigir hash se enviarmos.
+      // Omitido para simplicidade da CAPI Frontend, o PIXEL fará o matching principal.
+    }
+
+    const payload = {
+      data: [{
+        event_name: eventName,
+        event_time: Math.floor(Date.now() / 1000),
+        event_id: eventId,
+        action_source: 'website',
+        event_source_url: window.location.href,
+        user_data: userData,
+        custom_data: eventData
+      }]
+    };
+
+    await fetch(`https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${CAPI_TOKEN}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    console.log(`[CAPI] Evento ${eventName} enviado com sucesso!`);
+  } catch (err) {
+    console.error('[CAPI] Erro ao enviar evento:', err);
+  }
+}
+
 // Save Lead to DB
 export function saveLeadToDB(leadData) {
   const leads = JSON.parse(localStorage.getItem('pf_leads') || '[]');
@@ -94,13 +138,17 @@ function trackEvent(eventName, eventData = {}) {
   window.dataLayer.push({ event: eventName, ...eventData });
   
   // Push to Meta Pixel
+  const eventId = Date.now().toString() + Math.random().toString().substring(2, 8); // deduplication id
   if (typeof fbq === 'function') {
     if (eventName === 'PageView' || eventName === 'ViewContent' || eventName === 'Lead') {
-      fbq('track', eventName, eventData);
+      fbq('track', eventName, eventData, { eventID: eventId });
     } else {
-      fbq('trackCustom', eventName, eventData);
+      fbq('trackCustom', eventName, eventData, { eventID: eventId });
     }
   }
+
+  // Enviar para CAPI
+  sendCAPIEvent(eventName, eventData, eventId);
   
   // Save to Admin Panel DB
   saveEventToDB(eventName, eventData);
