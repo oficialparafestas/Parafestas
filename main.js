@@ -110,7 +110,7 @@ function trackEvent(eventName, eventData = {}) {
 document.addEventListener('DOMContentLoaded', () => {
   initTrackingSystem();
   
-  initWhatsAppLinks();
+  initClickTracking();
   initHeaderScroll();
   initMobileMenu();
   initCounters();
@@ -123,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
   trackEvent('PageView');
 });
 
-// 1. WhatsApp Links Formatter
-function initWhatsAppLinks() {
+// 1. Click Tracking (WhatsApp, Instagram, etc)
+function initClickTracking() {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const waBaseUrl = isMobile ? 'whatsapp://send' : 'https://web.whatsapp.com/send';
   const finalUrl = `${waBaseUrl}?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
@@ -141,6 +141,12 @@ function initWhatsAppLinks() {
   document.querySelectorAll('[data-action="hero-cta"]').forEach(el => {
     el.addEventListener('click', () => {
       trackEvent('HeroCTA');
+    });
+  });
+
+  document.querySelectorAll('a[href*="instagram.com"]').forEach(el => {
+    el.addEventListener('click', () => {
+      trackEvent('InstagramClick');
     });
   });
 }

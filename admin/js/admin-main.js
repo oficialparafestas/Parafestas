@@ -121,13 +121,28 @@ function renderDashboard(container) {
   setTimeout(() => {
     const ctx1 = document.getElementById('eventsChart');
     if(ctx1) {
+      // Gerar últimos 7 dias
+      const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        return d.toLocaleDateString('pt-BR', { weekday: 'short' });
+      }).reverse();
+
+      const visitsPerDay = last7Days.map(day => {
+        return events.filter(e => {
+          if (e.eventName !== 'PageView') return false;
+          const ed = new Date(e.date).toLocaleDateString('pt-BR', { weekday: 'short' });
+          return ed === day;
+        }).length;
+      });
+
       new Chart(ctx1, {
         type: 'line',
         data: {
-          labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], // mock
+          labels: last7Days,
           datasets: [{
-            label: 'Visitas',
-            data: [12, 19, 3, 5, 2, 3, 10], // mock
+            label: 'Visitas (PageView)',
+            data: visitsPerDay,
             borderColor: '#38bdf8',
             tension: 0.4
           }]
