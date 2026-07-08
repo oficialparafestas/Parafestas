@@ -50,11 +50,7 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1666162244660757&ev=PageView&noscript=1" /></noscript>
 
-    <div class="top-bar">
-      <div class="container">
-        <span>🎉 Estamos em Canaã dos Carajás · Orçamento gratuito em até 10 minutos · Seg a Sáb</span>
-      </div>
-    </div>
+    <!-- Top bar removida (Trust signal movido para o Hero) -->
 
     <header class="header" id="header">
       <div class="container header-container">
@@ -69,7 +65,7 @@
           <a href="https://www.instagram.com/parafestasoficial/" target="_blank" aria-label="Instagram" style="color: var(--color-dark); display: flex; align-items: center;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
           </a>
-          <a href="#" class="btn-primary header-cta" data-action="whatsapp" data-message="Olá! Vim pelo site e gostaria de solicitar um orçamento 😊">💬 Falar com a gente</a>
+          <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento%20%F0%9F%98%8A" class="btn-primary header-cta" target="_blank" rel="noopener" data-action="whatsapp">💬 Falar com a gente</a>
         </div>
       </div>
     </header>
@@ -81,12 +77,50 @@
           <span class="hero-badge">A loja completa para festas, confeitaria e descartável</span>
           <h1 class="hero-headline">Tudo que sua festa precisa, num só lugar</h1>
           <p class="hero-subheadline">De balões a personalizados, temos tudo para tornar o seu evento especial. Atendemos em Canaã dos Carajás com orçamento gratuito pelo WhatsApp.</p>
-          <div class="hero-ctas" style="flex-direction: column; align-items: center; gap: 10px; margin-bottom: 60px;">
-            <a href="#" class="btn-primary btn-large" data-action="whatsapp" data-message="Olá! Gostaria de solicitar um orçamento para minha festa 😊">Solicitar orçamento pelo WhatsApp</a>
-            <span style="font-size: 0.9rem; color: var(--color-gray); font-weight: 500;">⭐ +500 festas realizadas · Respondemos em até 10 minutos</span>
+          <div class="hero-trust-signal" style="margin-bottom: 24px; color: var(--color-pink); font-weight: 700; font-size: 1.1rem;">
+            <span>📍 Loja Física em Canaã dos Carajás</span>
+          </div>
+          <div class="hero-ctas" style="flex-direction: column; align-items: center; gap: 10px; margin-bottom: 40px;">
+            <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Gostaria%20de%20solicitar%20um%20or%C3%A7amento%20para%20minha%20festa%20%F0%9F%98%8A" class="btn-primary btn-large" id="hero-cta" data-action="hero-cta" target="_blank" rel="noopener">Solicitar orçamento pelo WhatsApp</a>
+            <span style="font-size: 0.9rem; color: var(--color-gray); font-weight: 500;">⭐ +500 festas realizadas · Orçamento gratuito em 10 minutos</span>
           </div>
           
 
+        </div>
+      </section>
+
+      <section class="catalog-section section-padding bg-light" id="catalogo">
+        <div class="container">
+          <div class="section-title-wrap">
+            <h2>Nossos Produtos</h2>
+            <p>Tudo o que você precisa para sua festa brilhar</p>
+          </div>
+          <div class="catalog-grid">
+            <div class="catalog-item">
+              <div class="catalog-img">
+                <img src="./IMG/GALERIA/galeria-1.webp" alt="Balões Personalizados" loading="lazy">
+              </div>
+              <h3>Balões Personalizados</h3>
+              <p>Bubble, buquês e arcos desconstruídos.</p>
+              <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20Bal%C3%B5es%20Personalizados" target="_blank" rel="noopener" class="btn-primary btn-block" data-action="whatsapp">Peça pelo WhatsApp</a>
+            </div>
+            <div class="catalog-item">
+              <div class="catalog-img">
+                <img src="./IMG/GALERIA/galeria-2.webp" alt="Kits Festa" loading="lazy">
+              </div>
+              <h3>Kits Festa Completos</h3>
+              <p>Kits temáticos com descartáveis e decoração.</p>
+              <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20Kits%20Festa" target="_blank" rel="noopener" class="btn-primary btn-block" data-action="whatsapp">Peça pelo WhatsApp</a>
+            </div>
+            <div class="catalog-item">
+              <div class="catalog-img">
+                <img src="./IMG/GALERIA/galeria-3.webp" alt="Confeitaria" loading="lazy">
+              </div>
+              <h3>Artigos de Confeitaria</h3>
+              <p>Formas, chocolates e confeitos premium.</p>
+              <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20Artigos%20de%20Confeitaria" target="_blank" rel="noopener" class="btn-primary btn-block" data-action="whatsapp">Peça pelo WhatsApp</a>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -94,10 +128,42 @@
         <div class="container">
           <div class="section-title-wrap">
             <h2>Quem confia, recomenda</h2>
-            <p>Junte-se a milhares de clientes satisfeitos</p>
+            <p>Junte-se aos nossos clientes de Canaã dos Carajás e região satisfeitos!</p>
           </div>
-          <div class="carousel-container" id="review-carousel">
-            <!-- Gerado via JS -->
+          <div class="carousel-container" style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory;">
+            <div class="review-card static-review" style="flex: 0 0 350px; scroll-snap-align: center;">
+              <div class="review-stars" style="color: var(--color-yellow); margin-bottom: 10px;">★★★★★</div>
+              <p class="review-text" style="font-style: italic; margin-bottom: 15px;">"A festa do meu filho foi aqui no bairro Vale Verde e a Parafestas foi fundamental. Entregaram tudo no prazo, os balões estavam lindos!"</p>
+              <div class="review-author" style="display: flex; align-items: center; gap: 10px;">
+                <div class="author-avatar" style="width: 40px; height: 40px; background: var(--color-pink); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">R</div>
+                <div>
+                  <div class="author-name" style="font-weight: 700;">Renata Silva</div>
+                  <div class="author-role" style="font-size: 0.8rem; color: var(--color-gray);">Canaã dos Carajás, PA</div>
+                </div>
+              </div>
+            </div>
+            <div class="review-card static-review" style="flex: 0 0 350px; scroll-snap-align: center;">
+              <div class="review-stars" style="color: var(--color-yellow); margin-bottom: 10px;">★★★★★</div>
+              <p class="review-text" style="font-style: italic; margin-bottom: 15px;">"Atendimento excelente pelo WhatsApp. Moro aqui perto do Centro e precisei de um kit de última hora, me salvaram!"</p>
+              <div class="review-author" style="display: flex; align-items: center; gap: 10px;">
+                <div class="author-avatar" style="width: 40px; height: 40px; background: var(--color-orange); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">C</div>
+                <div>
+                  <div class="author-name" style="font-weight: 700;">Carlos Mendes</div>
+                  <div class="author-role" style="font-size: 0.8rem; color: var(--color-gray);">Canaã dos Carajás, PA</div>
+                </div>
+              </div>
+            </div>
+            <div class="review-card static-review" style="flex: 0 0 350px; scroll-snap-align: center;">
+              <div class="review-stars" style="color: var(--color-yellow); margin-bottom: 10px;">★★★★★</div>
+              <p class="review-text" style="font-style: italic; margin-bottom: 15px;">"Trabalho com eventos aqui na região e a Parafestas é minha fornecedora de confiança. Qualidade sempre top."</p>
+              <div class="review-author" style="display: flex; align-items: center; gap: 10px;">
+                <div class="author-avatar" style="width: 40px; height: 40px; background: var(--color-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">J</div>
+                <div>
+                  <div class="author-name" style="font-weight: 700;">Juliana Assessoria</div>
+                  <div class="author-role" style="font-size: 0.8rem; color: var(--color-gray);">Organizadora de Eventos</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -134,7 +200,7 @@
                 <li><span class="check">✓</span> Facilidade de compra</li>
                 <li><span class="check">✓</span> Qualidade garantida</li>
               </ul>
-              <a href="#" class="btn-primary mt-4" data-action="whatsapp" data-message="Olá! Gostaria de saber mais sobre os produtos da Parafestas 😊">Quero conhecer as opções</a>
+              <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20os%20produtos%20da%20Parafestas%20%F0%9F%98%8A" target="_blank" rel="noopener" class="btn-primary mt-4" data-action="whatsapp">Quero conhecer as opções</a>
             </div>
           </div>
         </div>
@@ -159,9 +225,9 @@
             <p>Escolha o tipo de evento e a gente cuida do resto 💬</p>
             
             <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 40px;">
-              <a href="#" class="btn-secondary btn-large" data-action="whatsapp" data-message="Olá! Gostaria de um orçamento para uma Festa Infantil 🎂" style="flex: 1; min-width: 250px; font-size: 1.2rem; padding: 25px;">🎂 Festa Infantil</a>
-              <a href="#" class="btn-secondary btn-large" data-action="whatsapp" data-message="Olá! Gostaria de um orçamento para Casamento ou 15 Anos 💍" style="flex: 1; min-width: 250px; font-size: 1.2rem; padding: 25px;">💍 Casamento / 15 Anos</a>
-              <a href="#" class="btn-secondary btn-large" data-action="whatsapp" data-message="Olá! Gostaria de um orçamento para um evento especial. Pode me ajudar? 🎊" style="flex: 1; min-width: 250px; font-size: 1.2rem; padding: 25px;">🎊 Outro Evento</a>
+              <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Gostaria%20de%20um%20or%C3%A7amento%20para%20uma%20Festa%20Infantil%20%F0%9F%8E%82" target="_blank" rel="noopener" class="btn-secondary btn-large" data-action="whatsapp" style="flex: 1; min-width: 250px; font-size: 1.2rem; padding: 25px;">🎂 Festa Infantil</a>
+              <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Gostaria%20de%20um%20or%C3%A7amento%20para%20Casamento%20ou%2015%20Anos%20%F0%9F%92%8D" target="_blank" rel="noopener" class="btn-secondary btn-large" data-action="whatsapp" style="flex: 1; min-width: 250px; font-size: 1.2rem; padding: 25px;">💍 Casamento / 15 Anos</a>
+              <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Gostaria%20de%20um%20or%C3%A7amento%20para%20um%20evento%20especial.%20Pode%20me%20ajudar%3F%20%F0%9F%8E%8A" target="_blank" rel="noopener" class="btn-secondary btn-large" data-action="whatsapp" style="flex: 1; min-width: 250px; font-size: 1.2rem; padding: 25px;">🎊 Outro Evento</a>
             </div>
           </div>
         </div>
@@ -184,7 +250,7 @@
         <div class="section-title-wrap">
           <h2>Pronta para começar a planejar?</h2>
           <p>Quanto antes você entrar em contato, mais tempo temos para deixar tudo perfeito para o seu evento.</p>
-          <a href="#" class="btn-primary btn-large mt-4" data-action="whatsapp" data-message="Olá! Quero começar a planejar minha festa 🎉">Falar com a Parafestas</a>
+          <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Quero%20come%C3%A7ar%20a%20planejar%20minha%20festa%20%F0%9F%8E%89" target="_blank" rel="noopener" class="btn-primary btn-large mt-4" data-action="whatsapp">Falar com a Parafestas</a>
         </div>
         
         <div class="section-title-wrap" style="margin-top: 80px;">
@@ -220,13 +286,13 @@
 
     <div class="mobile-bottom-cta">
       <a href="#orcamento" class="btn-mobile-outline">Orçamento</a>
-      <a href="#" class="btn-mobile-solid" data-action="whatsapp">WhatsApp</a>
+      <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20um%20or%C3%A7amento%20%F0%9F%98%8A" target="_blank" rel="noopener" class="btn-mobile-solid" data-action="whatsapp">WhatsApp</a>
       <a href="https://www.instagram.com/parafestasoficial/" target="_blank" class="btn-mobile-outline" style="flex: 0 0 auto; width: 45px; display: flex; align-items: center; justify-content: center; padding: 0;" aria-label="Instagram">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
       </a>
     </div>
 
-    <a href="#" class="floating-whatsapp" aria-label="Falar no WhatsApp" data-action="whatsapp" data-message="Olá! Vim pelo site e gostaria de um orçamento 😊">
+    <a href="https://wa.me/5594991262090?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20um%20or%C3%A7amento%20%F0%9F%98%8A" target="_blank" rel="noopener" class="floating-whatsapp" aria-label="Falar no WhatsApp" data-action="whatsapp">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
       <span>Falar agora</span>
     </a>

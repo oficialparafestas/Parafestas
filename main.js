@@ -2,11 +2,11 @@
 const WHATSAPP_NUMBER = "5594991262090";
 const WHATSAPP_MESSAGE = "Olá! Vim do site da Parafestas e gostaria de solicitar um orçamento.";
 
-import galeria1 from './IMG/GALERIA/galeria-1.jpeg';
-import galeria2 from './IMG/GALERIA/galeria-2.jpeg';
-import galeria3 from './IMG/GALERIA/galeria-3.jpeg';
-import galeria4 from './IMG/GALERIA/galeria-4.jpeg';
-import galeria5 from './IMG/GALERIA/galeria-5.jpeg';
+import galeria1 from './IMG/GALERIA/galeria-1.webp';
+import galeria2 from './IMG/GALERIA/galeria-2.webp';
+import galeria3 from './IMG/GALERIA/galeria-3.webp';
+import galeria4 from './IMG/GALERIA/galeria-4.webp';
+import galeria5 from './IMG/GALERIA/galeria-5.webp';
 
 // Função auxiliar para UTMs e Scoring
 function initTrackingSystem() {
@@ -173,16 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 1. Click Tracking (WhatsApp, Instagram, etc)
 function initClickTracking() {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const waBaseUrl = isMobile ? 'whatsapp://send' : 'https://web.whatsapp.com/send';
+  // O href agora é nativo no HTML para não perder cliques.
+  // Apenas rastreia o clique.
   
   document.querySelectorAll('[data-action="whatsapp"]').forEach(el => {
-    const customMessage = el.getAttribute('data-message') || WHATSAPP_MESSAGE;
-    const finalUrl = `${waBaseUrl}?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(customMessage)}`;
-    
-    el.href = finalUrl;
-    if(!isMobile) el.target = "_blank";
-    
     el.addEventListener('click', () => {
       trackEvent('WhatsappClick');
     });
@@ -303,57 +297,7 @@ function initCounters() {
 
 // 4. Social Proof Carousel
 function initCarousel() {
-  const track = document.getElementById('carousel-track');
-  const reviews = [
-    { name: "Mariana Souza", role: "Mãe", text: "Fiz o aniversário de 5 anos do meu filho e encontrei tudo na Parafestas! Os balões personalizados ficaram perfeitos e o atendimento via WhatsApp foi super rápido. Recomendo muito!", stars: "★★★★★" },
-    { name: "Camila Rodrigues", role: "Assessora de Eventos", text: "Como organizadora de casamentos, preciso de fornecedores pontuais e com produtos premium. A Parafestas sempre entrega com excelência. Os descartáveis de luxo são um sucesso.", stars: "★★★★★" },
-    { name: "Juliana Mendes", role: "Noiva", text: "Comprei os itens para o meu Chá Bar e a qualidade impressionou todos os convidados. O orçamento foi feito na hora e a entrega foi impecável.", stars: "★★★★★" },
-    { name: "Roberto Silva", role: "RH / Corporativo", text: "Todo final de ano compramos os artigos da festa da empresa com eles. A variedade e o custo-benefício são incomparáveis na região.", stars: "★★★★★" }
-  ];
-
-  // Duplicar para loop infinito suave
-  const items = [...reviews, ...reviews];
-  
-  let html = '';
-  items.forEach(review => {
-    html += `
-      <div class="review-card">
-        <div class="review-stars">${review.stars}</div>
-        <p class="review-text">"${review.text}"</p>
-        <div class="review-author">
-          <div class="author-avatar">${review.name.charAt(0)}</div>
-          <div>
-            <div class="author-name">${review.name}</div>
-            <div class="author-role">${review.role}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-  
-  if (track) {
-    track.innerHTML = html;
-    
-    // Animação CSS-based via JS para controle preciso
-    let position = 0;
-    const speed = 1; // pixels por frame
-    
-    function step() {
-      position -= speed;
-      // Se rolou metade (os itens originais), reseta para loop infinito
-      if (Math.abs(position) >= track.scrollWidth / 2) {
-        position = 0;
-      }
-      track.style.transform = `translateX(${position}px)`;
-      requestAnimationFrame(step);
-    }
-    
-    // Pausar no hover
-    track.addEventListener('mouseenter', () => track.style.animationPlayState = 'paused');
-    track.addEventListener('mouseleave', () => track.style.animationPlayState = 'running');
-    
-    requestAnimationFrame(step);
-  }
+  // Migrado para HTML/CSS estático para melhor LCP e usabilidade nativa no mobile.
 }
 
 // 5. Dynamic Gallery (Pinterest Layout)
