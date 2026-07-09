@@ -228,7 +228,8 @@ body {
   background-color: var(--admin-surface);
   border-radius: 8px;
   border: 1px solid var(--admin-border);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .table-header {
@@ -263,6 +264,7 @@ body {
   font-weight: 600;
 }
 
+.badge-muito-frio { background-color: #f3f4f6; color: #9ca3af; }
 .badge-frio { background-color: #e5e7eb; color: #374151; }
 .badge-morno { background-color: #fef3c7; color: #d97706; }
 .badge-quente { background-color: #ffedd5; color: #ea580c; }

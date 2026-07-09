@@ -61,6 +61,9 @@ function loadView(viewName) {
   } else if (viewName === 'leads') {
     pageTitle.textContent = 'Leads & Contatos';
     renderLeads(contentArea);
+  } else if (viewName === 'crm') {
+    pageTitle.textContent = 'CRM Completo';
+    renderCRM(contentArea);
   } else if (viewName === 'analytics') {
     pageTitle.textContent = 'Analytics & Eventos';
     renderAnalytics(contentArea);
@@ -118,7 +121,7 @@ function renderDashboard(container) {
   `;
 
   // Render Charts
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     const ctx1 = document.getElementById('eventsChart');
     if(ctx1) {
       // Gerar últimos 7 dias
@@ -171,21 +174,23 @@ function renderDashboard(container) {
         options: { responsive: true, maintainAspectRatio: false }
       });
     }
-  }, 100);
+  });
 }
 
 function getBadgeClass(score) {
   if (score >= 151) return 'badge-muito-quente';
   if (score >= 81) return 'badge-quente';
   if (score >= 31) return 'badge-morno';
-  return 'badge-frio';
+  if (score >= 16) return 'badge-frio';
+  return 'badge-muito-frio';
 }
 
 function getScoreLabel(score) {
-  if (score >= 151) return 'M. Quente';
+  if (score >= 151) return 'Muito Quente';
   if (score >= 81) return 'Quente';
   if (score >= 31) return 'Morno';
-  return 'Frio';
+  if (score >= 16) return 'Frio';
+  return 'Muito Frio';
 }
 
 function renderLeads(container) {
@@ -215,7 +220,6 @@ function renderLeads(container) {
   container.innerHTML = `
     <div style="margin-bottom: 20px; display: flex; justify-content: space-between;">
       <input type="text" placeholder="Buscar leads..." style="padding: 10px; width: 300px; border-radius: 6px; border: 1px solid var(--admin-border); background: var(--admin-surface); color: var(--admin-text);">
-      <button class="btn-primary" style="width: auto; padding: 10px 20px;" id="export-csv">Exportar CSV</button>
     </div>
     <div class="table-card">
       <table class="admin-table">
@@ -236,9 +240,97 @@ function renderLeads(container) {
       </table>
     </div>
   `;
+}
 
-  document.getElementById('export-csv').addEventListener('click', () => {
-    alert('Função de exportação CSV será implementada em breve.');
+function exportToCSV(leads) {
+  const headers = ['Data', 'Nome', 'Email', 'WhatsApp', 'Evento', 'Origem (Source)', 'Campanha', 'Gênero', 'Idade', 'Interesses', 'Score', 'Status'];
+  const rows = leads.map(l => {
+    return [
+      new Date(l.date).toLocaleString('pt-BR'),
+      l.name || '',
+      l.email || '',
+      l.whatsapp || '',
+      l.event_type || '',
+      l.utm_source || 'orgânico',
+      l.utm_campaign || '-',
+      l.gender || 'N/A',
+      l.age || 'N/A',
+      l.interests || 'N/A',
+      l.score || 0,
+      getScoreLabel(l.score || 0)
+    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+  });
+
+  const csvContent = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'crm_leads.csv');
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderCRM(container) {
+  const leads = DB.getLeads().reverse();
+  
+  let rows = '';
+  if (leads.length === 0) {
+    rows = '<tr><td colspan="9" style="text-align:center;">Nenhum registro encontrado</td></tr>';
+  } else {
+    leads.forEach(l => {
+      const date = new Date(l.date).toLocaleDateString('pt-BR');
+      const score = l.score || 0;
+      
+      // Simular Gênero, Idade, Interesses se não existirem (já que o form atual não os captura nativamente)
+      // Apenas mockaremos dados provisórios para demonstração até que o formulário real colete isso.
+      const gender = l.gender || '-';
+      const age = l.age || '-';
+      const interests = l.interests || '-';
+
+      rows += `
+        <tr>
+          <td>${date}</td>
+          <td>${l.name}<br><small>${l.email}</small></td>
+          <td>${l.whatsapp}</td>
+          <td>${gender}</td>
+          <td>${age}</td>
+          <td><span style="font-size:12px;color:var(--admin-text-light)">${interests}</span></td>
+          <td>${l.event_type}</td>
+          <td><span class="badge ${getBadgeClass(score)}">${getScoreLabel(score)}</span></td>
+        </tr>
+      `;
+    });
+  }
+
+  container.innerHTML = `
+    <div style="margin-bottom: 20px; display: flex; justify-content: space-between;">
+      <h3 style="margin: 0; color: var(--admin-text);">Base de CRM Enriquecida</h3>
+      <button class="btn-primary" style="width: auto; padding: 10px 20px;" id="export-crm-csv">Exportar Base Completa CSV</button>
+    </div>
+    <div class="table-card">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Lead / Email</th>
+            <th>WhatsApp</th>
+            <th>Gênero</th>
+            <th>Idade</th>
+            <th>Interesses (Tags)</th>
+            <th>Evento Base</th>
+            <th>Termômetro</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('export-crm-csv').addEventListener('click', () => {
+    exportToCSV(leads);
   });
 }
 
