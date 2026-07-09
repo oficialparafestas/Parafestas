@@ -168,7 +168,7 @@ function renderDashboard(container) {
           labels: Object.keys(typeCounts).length ? Object.keys(typeCounts) : ['Sem dados'],
           datasets: [{
             data: Object.values(typeCounts).length ? Object.values(typeCounts) : [1],
-            backgroundColor: ['#38bdf8', '#818cf8', '#34d399', '#fbbf24', '#f87171']
+            backgroundColor: (Object.keys(typeCounts).length ? Object.keys(typeCounts) : ['Sem dados']).map((_, i) => \`hsl(${(i * 137.5) % 360}, 70%, 60%)\`)
           }]
         },
         options: { responsive: true, maintainAspectRatio: false }
