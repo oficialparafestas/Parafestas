@@ -1,25 +1,37 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import pkg from 'pg';
+const { Pool } = pkg;
+import dotenv from 'dotenv';
+dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let pool;
 
 export async function getDb() {
-  const db = await open({
-    filename: path.join(__dirname, 'database.sqlite'),
-    driver: sqlite3.Database
-  });
-  return db;
+  if (!pool) {
+    if (process.env.POSTGRES_URL) {
+      // Vercel Postgres ou Supabase ou Neon
+      pool = new Pool({
+        connectionString: process.env.POSTGRES_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+    } else {
+      // Modo fallback caso rode local e tenha configurado banco local
+      pool = new Pool({
+        connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/parafestas',
+      });
+    }
+  }
+  return pool;
 }
 
 export async function initDb() {
   const db = await getDb();
   
-  await db.exec(`
+  // No PostgreSQL, AUTOINCREMENT é SERIAL
+  // E DATETIME DEFAULT CURRENT_TIMESTAMP é TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  // E REAL é DOUBLE PRECISION
+  await db.query(\`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       username TEXT UNIQUE,
       password TEXT
     );
@@ -27,8 +39,8 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
       visitor_id TEXT,
-      started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      ended_at DATETIME,
+      started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ended_at TIMESTAMP,
       source TEXT,
       medium TEXT,
       campaign TEXT,
@@ -47,7 +59,7 @@ export async function initDb() {
       event_name TEXT,
       page_url TEXT,
       metadata TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS leads (
@@ -62,15 +74,15 @@ export async function initDb() {
       score INTEGER DEFAULT 0,
       temperature TEXT,
       status TEXT DEFAULT 'Novo',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS sales (
       id TEXT PRIMARY KEY,
       lead_id TEXT,
-      value REAL,
+      value DOUBLE PRECISION,
       status TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(lead_id) REFERENCES leads(id)
     );
 
@@ -78,27 +90,27 @@ export async function initDb() {
       campaign_id TEXT PRIMARY KEY,
       campaign_name TEXT,
       date TEXT,
-      spend REAL,
+      spend DOUBLE PRECISION,
       impressions INTEGER,
       reach INTEGER,
       clicks INTEGER,
-      ctr REAL,
-      cpc REAL,
-      cpm REAL,
+      ctr DOUBLE PRECISION,
+      cpc DOUBLE PRECISION,
+      cpm DOUBLE PRECISION,
       conversions INTEGER,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS integration_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       provider TEXT,
       action TEXT,
       status TEXT,
       message TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-  `);
+  \`);
   
-  console.log('[DB] Database Initialized');
+  console.log('[DB] PostgreSQL Initialized');
   return db;
 }

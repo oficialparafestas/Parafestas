@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { initDb, getDb } from './db.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -18,7 +20,6 @@ app.use(cookieParser());
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
-// Middleware para verificar auth nas rotas /api/admin
 function authenticateToken(req, res, next) {
   const token = req.cookies.admin_token;
   if (!token) return res.status(401).json({ error: 'Acesso negado. Token não fornecido.' });
@@ -30,9 +31,6 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// ==========================================
-// AUTHENTICATION
-// ==========================================
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
@@ -52,17 +50,11 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
   return res.json({ success: true, user: req.user });
 });
 
-// ==========================================
-// TRACKING & CAPI (Frontend Facing)
-// ==========================================
-
 async function sendCAPI(eventName, eventData, eventId, reqInfo) {
   const PIXEL_ID = process.env.META_PIXEL_ID;
   const CAPI_TOKEN = process.env.META_CAPI_TOKEN;
   
-  if (!PIXEL_ID || !CAPI_TOKEN) {
-    return; // Log?
-  }
+  if (!PIXEL_ID || !CAPI_TOKEN) return;
 
   const payload = {
     data: [{
@@ -81,37 +73,27 @@ async function sendCAPI(eventName, eventData, eventId, reqInfo) {
     }]
   };
 
-  if (process.env.META_TEST_EVENT_CODE) {
-    payload.test_event_code = process.env.META_TEST_EVENT_CODE;
-  }
-
   try {
-    const response = await axios.post(`https://graph.facebook.com/${process.env.META_API_VERSION || 'v19.0'}/${PIXEL_ID}/events?access_token=${CAPI_TOKEN}`, payload);
+    await axios.post(`https://graph.facebook.com/${process.env.META_API_VERSION || 'v19.0'}/${PIXEL_ID}/events?access_token=${CAPI_TOKEN}`, payload);
     const db = await getDb();
-    await db.run('INSERT INTO integration_logs (provider, action, status, message) VALUES (?, ?, ?, ?)', ['Meta CAPI', 'Event Send', 'Success', `${eventName} - ${eventId}`]);
+    await db.query('INSERT INTO integration_logs (provider, action, status, message) VALUES ($1, $2, $3, $4)', ['Meta CAPI', 'Event Send', 'Success', `${eventName} - ${eventId}`]);
   } catch (err) {
-    console.error('[CAPI Error]', err.response?.data || err.message);
     const db = await getDb();
-    await db.run('INSERT INTO integration_logs (provider, action, status, message) VALUES (?, ?, ?, ?)', ['Meta CAPI', 'Event Error', 'Error', JSON.stringify(err.response?.data || err.message)]);
+    await db.query('INSERT INTO integration_logs (provider, action, status, message) VALUES ($1, $2, $3, $4)', ['Meta CAPI', 'Event Error', 'Error', JSON.stringify(err.response?.data || err.message)]);
   }
 }
 
 app.post('/api/events', async (req, res) => {
   const { eventId, eventName, visitorId, sessionId, url, metadata, fbp, fbc } = req.body;
-  
-  if (!eventName || !eventId) {
-    return res.status(400).json({ error: 'eventName e eventId obrigatórios.' });
-  }
+  if (!eventName || !eventId) return res.status(400).json({ error: 'eventName e eventId obrigatórios.' });
 
-  const db = await getDb();
-  
   try {
-    await db.run(
-      'INSERT INTO events (id, event_id, visitor_id, session_id, event_name, page_url, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    const db = await getDb();
+    await db.query(
+      'INSERT INTO events (id, event_id, visitor_id, session_id, event_name, page_url, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7)',
       [uuidv4(), eventId, visitorId, sessionId, eventName, url, JSON.stringify(metadata || {})]
     );
 
-    // Envia assíncrono para a CAPI
     sendCAPI(eventName, metadata, eventId, {
       ip: req.ip || req.headers['x-forwarded-for'] || '',
       userAgent: req.headers['user-agent'] || '',
@@ -125,21 +107,15 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-// ==========================================
-// LEADS (Frontend Facing)
-// ==========================================
 app.post('/api/leads', async (req, res) => {
-  const { eventId, visitorId, name, email, phone, source, medium, campaign, score, temperature } = req.body;
-  const db = await getDb();
-  
+  const { visitorId, name, email, phone, source, medium, campaign, score, temperature } = req.body;
   try {
+    const db = await getDb();
     const leadId = uuidv4();
-    await db.run(
-      'INSERT INTO leads (id, visitor_id, name, email, phone, source, medium, campaign, score, temperature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    await db.query(
+      'INSERT INTO leads (id, visitor_id, name, email, phone, source, medium, campaign, score, temperature) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
       [leadId, visitorId, name, email, phone, source, medium, campaign, score || 0, temperature || 'Frio']
     );
-
-    // Registra evento CAPI de Lead também se desejar (ou deixa para ser disparado pelo frontend/trackEvent)
     res.json({ success: true, leadId });
   } catch (e) {
     console.error(e);
@@ -147,33 +123,26 @@ app.post('/api/leads', async (req, res) => {
   }
 });
 
-// ==========================================
-// ADMIN API (Protected routes)
-// ==========================================
 app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
-  const db = await getDb();
-  
   try {
-    const totalVisitors = await db.get('SELECT COUNT(DISTINCT visitor_id) as count FROM sessions');
-    const totalLeads = await db.get('SELECT COUNT(*) as count FROM leads');
-    const totalWhatsapp = await db.get('SELECT COUNT(*) as count FROM events WHERE event_name = ?', ['WhatsappClick']);
-    const hotLeads = await db.get('SELECT COUNT(*) as count FROM leads WHERE temperature IN (?, ?)', ['Quente', 'Muito quente']);
+    const db = await getDb();
+    const totalVisitors = await db.query('SELECT COUNT(DISTINCT visitor_id) as count FROM sessions');
+    const totalLeads = await db.query('SELECT COUNT(*) as count FROM leads');
+    const totalWhatsapp = await db.query('SELECT COUNT(*) as count FROM events WHERE event_name = $1', ['WhatsappClick']);
+    const hotLeads = await db.query('SELECT COUNT(*) as count FROM leads WHERE temperature IN ($1, $2)', ['Quente', 'Muito quente']);
     
-    // Resumo dos últimos leads
-    const recentLeads = await db.all('SELECT * FROM leads ORDER BY created_at DESC LIMIT 10');
-    
-    // Contagem de eventos para gráficos
-    const eventsBreakdown = await db.all('SELECT event_name, COUNT(*) as count FROM events GROUP BY event_name');
+    const recentLeads = await db.query('SELECT * FROM leads ORDER BY created_at DESC LIMIT 10');
+    const eventsBreakdown = await db.query('SELECT event_name, COUNT(*) as count FROM events GROUP BY event_name');
     
     res.json({
       success: true,
       data: {
-        visitors: totalVisitors.count,
-        leads: totalLeads.count,
-        whatsapp: totalWhatsapp.count,
-        hotLeads: hotLeads.count,
-        recentLeads,
-        eventsBreakdown
+        visitors: totalVisitors.rows[0].count,
+        leads: totalLeads.rows[0].count,
+        whatsapp: totalWhatsapp.rows[0].count,
+        hotLeads: hotLeads.rows[0].count,
+        recentLeads: recentLeads.rows,
+        eventsBreakdown: eventsBreakdown.rows
       }
     });
   } catch (e) {
@@ -182,40 +151,32 @@ app.get('/api/admin/dashboard', authenticateToken, async (req, res) => {
   }
 });
 
-// ==========================================
-// META ADS API (Admin Dashboard)
-// ==========================================
 app.get('/api/meta/sync', authenticateToken, async (req, res) => {
   const AD_ACCOUNT = process.env.META_AD_ACCOUNT_ID;
   const TOKEN = process.env.META_MARKETING_ACCESS_TOKEN;
   const VERSION = process.env.META_API_VERSION || 'v19.0';
   
-  if (!AD_ACCOUNT || !TOKEN) {
-    return res.status(400).json({ success: false, error: 'Meta Ads config missing in .env' });
-  }
+  if (!AD_ACCOUNT || !TOKEN) return res.status(400).json({ success: false, error: 'Meta Ads config missing in .env' });
 
   try {
     const url = `https://graph.facebook.com/${VERSION}/act_${AD_ACCOUNT}/insights?fields=campaign_id,campaign_name,spend,impressions,reach,clicks,ctr,cpc,cpm,actions&date_preset=last_30d&level=campaign&access_token=${TOKEN}`;
     const response = await axios.get(url);
-    
     const db = await getDb();
     
     for (const item of response.data.data) {
-      // Upsert
-      await db.run(`
+      await db.query(`
         INSERT INTO meta_campaign_metrics 
         (campaign_id, campaign_name, date, spend, impressions, reach, clicks, ctr, cpc, cpm) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         ON CONFLICT(campaign_id) DO UPDATE SET
-        campaign_name=excluded.campaign_name, spend=excluded.spend, impressions=excluded.impressions,
-        reach=excluded.reach, clicks=excluded.clicks, ctr=excluded.ctr, cpc=excluded.cpc, cpm=excluded.cpm, updated_at=CURRENT_TIMESTAMP
+        campaign_name=EXCLUDED.campaign_name, spend=EXCLUDED.spend, impressions=EXCLUDED.impressions,
+        reach=EXCLUDED.reach, clicks=EXCLUDED.clicks, ctr=EXCLUDED.ctr, cpc=EXCLUDED.cpc, cpm=EXCLUDED.cpm, updated_at=CURRENT_TIMESTAMP
       `, [
         item.campaign_id, item.campaign_name, item.date_start, 
         item.spend, item.impressions, item.reach, item.clicks, 
         item.ctr, item.cpc, item.cpm
       ]);
     }
-
     res.json({ success: true, data: response.data.data });
   } catch (e) {
     console.error('[Meta Ads Error]', e.response?.data || e.message);
@@ -223,35 +184,28 @@ app.get('/api/meta/sync', authenticateToken, async (req, res) => {
   }
 });
 
-// ==========================================
-// SERVIR FRONTEND ESTÁTICO (PRODUÇÃO)
-// ==========================================
-import path from 'path';
-import { fileURLToPath } from 'url';
-
+// Arquivos estáticos (ignorados se for serverless via vercel.json, mas úteis para rodar via node)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Serve arquivos da pasta /dist (gerada pelo Vite)
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// Redireciona qualquer rota /admin/* para o painel admin (SPA)
 app.get('/admin/*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/admin/index.html'));
 });
 
-// Redireciona qualquer outra rota para o site principal (Landing Page)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// ==========================================
-// INICIALIZAÇÃO
-// ==========================================
-initDb().then(() => {
+// Inicializa o banco de dados. 
+// A Vercel executa de forma serverless, então a promessa pode atrasar o primeiro request.
+initDb().catch(e => console.error(e));
+
+// Só escuta na porta se não estiver rodando dentro do Serverless da Vercel
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`[SERVER] API rodando na porta ${PORT}`);
   });
-}).catch(err => {
-  console.error('[DB] Erro de inicialização', err);
-});
+}
+
+export default app;
