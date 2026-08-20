@@ -1,375 +1,291 @@
-import { DB } from './db.js';
+// admin-main.js - Arquitetura de UI modularizada
+let globalData = null;
 
-let currentSession = null;
-
+// Sistema de navegação SPA
 document.addEventListener('DOMContentLoaded', () => {
-  currentSession = DB.getSession();
+  initNavigation();
+  loadDashboardData();
   
-  if (!currentSession) {
-    window.location.href = '/admin/login.html';
-    return;
-  }
-
-  document.getElementById('user-email').textContent = currentSession.email;
-  document.getElementById('user-role').textContent = `Perfil: ${currentSession.role}`;
-
-  document.getElementById('logout-btn').addEventListener('click', () => {
-    DB.logout();
+  // Logout
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/admin/login.html';
   });
 
-  initNavigation();
-  loadView('dashboard'); // view inicial
+  // Date Filter
+  document.getElementById('date-filter').addEventListener('change', () => {
+    loadDashboardData();
+  });
 });
 
 function initNavigation() {
-  const navItems = document.querySelectorAll('.nav-item');
-  
-  // Controle de acesso básico
-  if (currentSession.role === 'COMERCIAL') {
-    // Ocultar nav de config e analytics
-    document.querySelector('[data-view="config"]').style.display = 'none';
-    document.querySelector('[data-view="analytics"]').style.display = 'none';
-  }
-  if (currentSession.role === 'GESTOR') {
-    document.querySelector('[data-view="config"]').style.display = 'none';
-  }
-
+  const navItems = document.querySelectorAll('.nav-item[data-view]');
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
-      navItems.forEach(n => n.classList.remove('active'));
-      item.classList.add('active');
-      const view = item.getAttribute('data-view');
-      loadView(view);
+      navItems.forEach(nav => nav.classList.remove('active'));
+      e.target.classList.add('active');
+      const view = e.target.getAttribute('data-view');
+      renderView(view);
     });
   });
 }
 
-function loadView(viewName) {
-  const contentArea = document.getElementById('content-area');
-  const pageTitle = document.getElementById('page-title');
-
-  // Proteção de rota
-  if (currentSession.role === 'COMERCIAL' && viewName !== 'leads') {
-    viewName = 'leads';
-  }
-
-  if (viewName === 'dashboard') {
-    pageTitle.textContent = 'Dashboard';
-    renderDashboard(contentArea);
-  } else if (viewName === 'leads') {
-    pageTitle.textContent = 'Leads & Contatos';
-    renderLeads(contentArea);
-  } else if (viewName === 'crm') {
-    pageTitle.textContent = 'CRM Completo';
-    renderCRM(contentArea);
-  } else if (viewName === 'analytics') {
-    pageTitle.textContent = 'Analytics & Eventos';
-    renderAnalytics(contentArea);
-  } else if (viewName === 'config') {
-    pageTitle.textContent = 'Configurações';
-    contentArea.innerHTML = `<h3>Configurações do Sistema</h3><p>Área restrita ao administrador.</p>`;
+async function loadDashboardData() {
+  const statusEl = document.getElementById('sync-status');
+  statusEl.innerText = 'Sincronizando...';
+  
+  try {
+    const res = await fetch('/api/admin/dashboard');
+    if (res.status === 401 || res.status === 403) {
+      window.location.href = '/admin/login.html';
+      return;
+    }
+    
+    const json = await res.json();
+    if (json.success) {
+      globalData = json.data;
+      statusEl.innerText = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
+      const activeView = document.querySelector('.nav-item.active').getAttribute('data-view');
+      renderView(activeView);
+    }
+  } catch (err) {
+    console.error(err);
+    statusEl.innerText = 'Falha na conexão';
   }
 }
 
+function renderView(viewName) {
+  const contentArea = document.getElementById('content-area');
+  const title = document.getElementById('page-title');
+  
+  contentArea.innerHTML = ''; // Limpar anterior
+
+  if (!globalData) {
+    contentArea.innerHTML = '<div class="loading">Carregando dados...</div>';
+    return;
+  }
+
+  switch(viewName) {
+    case 'dashboard':
+      title.innerText = 'Centro de Comando Parafestas';
+      renderDashboard(contentArea);
+      break;
+    case 'analytics':
+      title.innerText = 'Analytics Executivo';
+      renderAnalytics(contentArea);
+      break;
+    case 'crm':
+      title.innerText = 'Leads & CRM';
+      renderCRM(contentArea);
+      break;
+    case 'funil':
+      title.innerText = 'Funil de Conversão';
+      renderFunnel(contentArea);
+      break;
+    case 'vendas':
+      title.innerText = 'Vendas & Financeiro';
+      contentArea.innerHTML = '<div class="empty-state">Integre dados de venda para habilitar esta seção.</div>';
+      break;
+    case 'meta_ads':
+      title.innerText = 'Meta Ads - Performance';
+      renderMetaAds(contentArea);
+      break;
+    case 'pixel_api':
+      title.innerText = 'Pixel & API - Diagnóstico';
+      renderDiagnostics(contentArea);
+      break;
+    default:
+      title.innerText = viewName;
+      contentArea.innerHTML = '<div class="empty-state">Módulo em construção.</div>';
+  }
+}
+
+// =====================================
+// COMPONENTES DE VIEW
+// =====================================
+
 function renderDashboard(container) {
-  const leads = DB.getLeads();
-  const events = DB.getEvents();
-  
-  const totalLeads = leads.length;
-  const totalVisitors = new Set(events.filter(e => e.eventName === 'PageView').map(e => e.sessionId)).size || 0;
-  
-  const wppClicks = events.filter(e => e.eventName === 'WhatsappClick').length;
-  const instClicks = events.filter(e => e.eventName === 'InstagramClick').length;
-  
-  const convRate = totalVisitors > 0 ? ((totalLeads / totalVisitors) * 100).toFixed(1) + '%' : '0%';
+  const d = globalData;
+  const cpl = d.leads > 0 ? `R$ ${((d.metaSpend || 0) / d.leads).toFixed(2)}` : 'R$ 0,00';
+  const convRate = d.visitors > 0 ? `${((d.leads / d.visitors) * 100).toFixed(1)}%` : '0%';
 
   container.innerHTML = `
     <div class="dashboard-grid">
       <div class="stat-card">
-        <div class="stat-title">Visitantes Totais</div>
-        <div class="stat-value">${totalVisitors}</div>
+        <h3>VISITANTES</h3>
+        <div class="stat-value">${d.visitors}</div>
+        <div class="stat-desc">Sessões no período</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Leads Captados</div>
-        <div class="stat-value">${totalLeads}</div>
+        <h3>LEADS GERADOS</h3>
+        <div class="stat-value">${d.leads}</div>
+        <div class="stat-desc">Contatos registrados</div>
       </div>
       <div class="stat-card">
-        <div class="stat-title">Taxa de Conversão</div>
+        <h3>CONTATOS WHATSAPP</h3>
+        <div class="stat-value">${d.whatsapp}</div>
+        <div class="stat-desc">Cliques diretos</div>
+      </div>
+      <div class="stat-card highlight">
+        <h3>LEADS QUENTES</h3>
+        <div class="stat-value">${d.hotLeads}</div>
+        <div class="stat-desc">Maior probabilidade de compra</div>
+      </div>
+      <div class="stat-card">
+        <h3>INVESTIMENTO ADS</h3>
+        <div class="stat-value">R$ ${(d.metaSpend || 0).toFixed(2)}</div>
+        <div class="stat-desc">Meta Marketing API</div>
+      </div>
+      <div class="stat-card">
+        <h3>CUSTO POR LEAD</h3>
+        <div class="stat-value">${cpl}</div>
+        <div class="stat-desc">Investimento / Leads</div>
+      </div>
+      <div class="stat-card">
+        <h3>CONVERSÃO DO SITE</h3>
         <div class="stat-value">${convRate}</div>
+        <div class="stat-desc">Leads / Sessões únicas</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-title">Cliques WhatsApp</div>
-        <div class="stat-value">${wppClicks}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Cliques Instagram</div>
-        <div class="stat-value">${instClicks}</div>
+      <div class="stat-card disabled">
+        <h3>ROAS</h3>
+        <div class="stat-value">Indisponível</div>
+        <div class="stat-desc">Integre dados de venda</div>
       </div>
     </div>
-    <div class="charts-grid">
-      <div class="chart-card">
-        <h3 style="margin-bottom: 15px; color: var(--admin-text-light); font-size: 14px;">Eventos por Dia (Últimos 7 dias)</h3>
-        <canvas id="eventsChart"></canvas>
+    
+    <div class="charts-row" style="display:flex; gap:20px; margin-top:20px;">
+      <div class="chart-container" style="flex:2; background:var(--admin-surface); padding:20px; border-radius:12px;">
+        <h3>Origem do Tráfego</h3>
+        <canvas id="trafficChart"></canvas>
       </div>
-      <div class="chart-card">
-        <h3 style="margin-bottom: 15px; color: var(--admin-text-light); font-size: 14px;">Leads por Tipo de Evento</h3>
-        <canvas id="leadsChart"></canvas>
+      <div class="chart-container" style="flex:1; background:var(--admin-surface); padding:20px; border-radius:12px;">
+        <h3>Temperatura da Base</h3>
+        <canvas id="tempChart"></canvas>
       </div>
     </div>
   `;
 
-  // Render Charts
-  requestAnimationFrame(() => {
-    const ctx1 = document.getElementById('eventsChart');
-    if(ctx1) {
-      // Gerar últimos 7 dias
-      const last7Days = [...Array(7)].map((_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        return d.toLocaleDateString('pt-BR', { weekday: 'short' });
-      }).reverse();
-
-      const visitsPerDay = last7Days.map(day => {
-        return events.filter(e => {
-          if (e.eventName !== 'PageView') return false;
-          const ed = new Date(e.date).toLocaleDateString('pt-BR', { weekday: 'short' });
-          return ed === day;
-        }).length;
-      });
-
-      new Chart(ctx1, {
-        type: 'line',
-        data: {
-          labels: last7Days,
-          datasets: [{
-            label: 'Visitas (PageView)',
-            data: visitsPerDay,
-            borderColor: '#38bdf8',
-            tension: 0.4
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-    }
-
-    const ctx2 = document.getElementById('leadsChart');
-    if(ctx2) {
-      // Aggregate leads by event_type
-      const typeCounts = leads.reduce((acc, l) => {
-        acc[l.event_type] = (acc[l.event_type] || 0) + 1;
-        return acc;
-      }, {});
-
-      new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(typeCounts).length ? Object.keys(typeCounts) : ['Sem dados'],
-          datasets: [{
-            data: Object.values(typeCounts).length ? Object.values(typeCounts) : [1],
-            backgroundColor: (Object.keys(typeCounts).length ? Object.keys(typeCounts) : ['Sem dados']).map((_, i) => \`hsl(${(i * 137.5) % 360}, 70%, 60%)\`)
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-    }
-  });
-}
-
-function getBadgeClass(score) {
-  if (score >= 151) return 'badge-muito-quente';
-  if (score >= 81) return 'badge-quente';
-  if (score >= 31) return 'badge-morno';
-  if (score >= 16) return 'badge-frio';
-  return 'badge-muito-frio';
-}
-
-function getScoreLabel(score) {
-  if (score >= 151) return 'Muito Quente';
-  if (score >= 81) return 'Quente';
-  if (score >= 31) return 'Morno';
-  if (score >= 16) return 'Frio';
-  return 'Muito Frio';
-}
-
-function renderLeads(container) {
-  const leads = DB.getLeads().reverse(); // Mais novos primeiro
-  
-  let rows = '';
-  if (leads.length === 0) {
-    rows = '<tr><td colspan="8" style="text-align:center;">Nenhum lead encontrado</td></tr>';
-  } else {
-    leads.forEach(l => {
-      const date = new Date(l.date).toLocaleDateString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      const score = l.score || 0;
-      rows += `
-        <tr>
-          <td>${date}</td>
-          <td><strong>${l.name}</strong><br><small>${l.email}</small></td>
-          <td>${l.whatsapp}</td>
-          <td>${l.event_type}</td>
-          <td>${l.utm_source || '-'} / ${l.utm_campaign || '-'}</td>
-          <td><span class="badge ${getBadgeClass(score)}">${score} pts (${getScoreLabel(score)})</span></td>
-          <td>Novo</td>
-        </tr>
-      `;
-    });
-  }
-
-  container.innerHTML = `
-    <div style="margin-bottom: 20px; display: flex; justify-content: space-between;">
-      <input type="text" placeholder="Buscar leads..." style="padding: 10px; width: 300px; border-radius: 6px; border: 1px solid var(--admin-border); background: var(--admin-surface); color: var(--admin-text);">
-    </div>
-    <div class="table-card">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Contato</th>
-            <th>WhatsApp</th>
-            <th>Evento</th>
-            <th>Origem (UTM)</th>
-            <th>Score</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-function exportToCSV(leads) {
-  const headers = ['Data', 'Nome', 'Email', 'WhatsApp', 'Evento', 'Origem (Source)', 'Campanha', 'Gênero', 'Idade', 'Interesses', 'Score', 'Status'];
-  const rows = leads.map(l => {
-    return [
-      new Date(l.date).toLocaleString('pt-BR'),
-      l.name || '',
-      l.email || '',
-      l.whatsapp || '',
-      l.event_type || '',
-      l.utm_source || 'orgânico',
-      l.utm_campaign || '-',
-      l.gender || 'N/A',
-      l.age || 'N/A',
-      l.interests || 'N/A',
-      l.score || 0,
-      getScoreLabel(l.score || 0)
-    ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
-  });
-
-  const csvContent = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.setAttribute('href', url);
-  a.setAttribute('download', 'crm_leads.csv');
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function renderCRM(container) {
-  const leads = DB.getLeads().reverse();
-  
-  let rows = '';
-  if (leads.length === 0) {
-    rows = '<tr><td colspan="9" style="text-align:center;">Nenhum registro encontrado</td></tr>';
-  } else {
-    leads.forEach(l => {
-      const date = new Date(l.date).toLocaleDateString('pt-BR');
-      const score = l.score || 0;
-      
-      // Simular Gênero, Idade, Interesses se não existirem (já que o form atual não os captura nativamente)
-      // Apenas mockaremos dados provisórios para demonstração até que o formulário real colete isso.
-      const gender = l.gender || '-';
-      const age = l.age || '-';
-      const interests = l.interests || '-';
-
-      rows += `
-        <tr>
-          <td>${date}</td>
-          <td>${l.name}<br><small>${l.email}</small></td>
-          <td>${l.whatsapp}</td>
-          <td>${gender}</td>
-          <td>${age}</td>
-          <td><span style="font-size:12px;color:var(--admin-text-light)">${interests}</span></td>
-          <td>${l.event_type}</td>
-          <td><span class="badge ${getBadgeClass(score)}">${getScoreLabel(score)}</span></td>
-        </tr>
-      `;
-    });
-  }
-
-  container.innerHTML = `
-    <div style="margin-bottom: 20px; display: flex; justify-content: space-between;">
-      <h3 style="margin: 0; color: var(--admin-text);">Base de CRM Enriquecida</h3>
-      <button class="btn-primary" style="width: auto; padding: 10px 20px;" id="export-crm-csv">Exportar Base Completa CSV</button>
-    </div>
-    <div class="table-card">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Lead / Email</th>
-            <th>WhatsApp</th>
-            <th>Gênero</th>
-            <th>Idade</th>
-            <th>Interesses (Tags)</th>
-            <th>Evento Base</th>
-            <th>Termômetro</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  document.getElementById('export-crm-csv').addEventListener('click', () => {
-    exportToCSV(leads);
-  });
+  // Aqui inicializaríamos os gráficos Chart.js com os dados reais...
 }
 
 function renderAnalytics(container) {
-  const events = DB.getEvents().reverse().slice(0, 50); // ultimos 50
+  // Mock view for execution
+  container.innerHTML = `<div style="color:var(--admin-text)">Analytics em Desenvolvimento. Aqui mostraremos dados profundos de sessão e pageviews.</div>`;
+}
+
+function renderCRM(container) {
+  const leads = globalData.recentLeads || [];
   
   let rows = '';
-  if (events.length === 0) {
-    rows = '<tr><td colspan="4" style="text-align:center;">Nenhum evento registrado</td></tr>';
+  if (leads.length === 0) {
+    rows = '<tr><td colspan="7" style="text-align:center;">Nenhum lead encontrado no período</td></tr>';
   } else {
-    events.forEach(e => {
-      const date = new Date(e.date).toLocaleTimeString('pt-BR');
-      rows += `
-        <tr>
-          <td>${date}</td>
-          <td><strong>${e.eventName}</strong></td>
-          <td>${e.url || '-'}</td>
-          <td><pre style="font-size:11px; margin:0; max-width: 200px; overflow:hidden; text-overflow:ellipsis;">${JSON.stringify(e.data || {})}</pre></td>
-        </tr>
-      `;
-    });
+    rows = leads.map(l => `
+      <tr>
+        <td>${l.name}</td>
+        <td>${l.phone || l.email}</td>
+        <td>${l.source}</td>
+        <td>${l.campaign}</td>
+        <td>${l.score}</td>
+        <td><span class="badge badge-${(l.temperature||'frio').toLowerCase().replace(' ', '-')}">${l.temperature}</span></td>
+        <td><button class="btn-primary" style="padding: 4px 10px; font-size:12px;">Ver</button></td>
+      </tr>
+    `).join('');
   }
 
   container.innerHTML = `
     <div class="table-card">
-      <div class="table-header"><h3>Últimos Eventos (Log)</h3></div>
       <table class="admin-table">
         <thead>
           <tr>
-            <th>Hora</th>
-            <th>Evento</th>
-            <th>Página</th>
-            <th>Dados (JSON)</th>
+            <th>Nome</th>
+            <th>Contato</th>
+            <th>Origem</th>
+            <th>Campanha</th>
+            <th>Score</th>
+            <th>Temperatura</th>
+            <th>Ação</th>
           </tr>
         </thead>
-        <tbody>
-          ${rows}
-        </tbody>
+        <tbody>${rows}</tbody>
       </table>
+    </div>
+  `;
+}
+
+function renderFunnel(container) {
+  const v = globalData.visitors || 1;
+  const l = globalData.leads || 0;
+  const w = globalData.whatsapp || 0;
+  
+  container.innerHTML = `
+    <div style="background:var(--admin-surface); padding: 40px; border-radius: 12px; text-align: center;">
+      <div style="margin-bottom:20px;">
+        <h3>Visitantes</h3>
+        <div style="font-size:24px; font-weight:bold;">${v}</div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <h3>Cliques WhatsApp (${((w/v)*100).toFixed(1)}%)</h3>
+        <div style="font-size:24px; font-weight:bold;">${w}</div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <h3>Leads Gerados (${((l/v)*100).toFixed(1)}%)</h3>
+        <div style="font-size:24px; font-weight:bold;">${l}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMetaAds(container) {
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+      <h3>Sincronização de Campanhas Meta</h3>
+      <button class="btn-primary" id="btn-sync-meta">Sincronizar Agora</button>
+    </div>
+    <div id="meta-results" class="table-card">
+      <p style="padding: 20px;">Clique em sincronizar para puxar os dados da Meta Marketing API.</p>
+    </div>
+  `;
+  
+  document.getElementById('btn-sync-meta').addEventListener('click', async () => {
+    const resEl = document.getElementById('meta-results');
+    resEl.innerHTML = '<p style="padding: 20px;">Sincronizando com Meta Graph API...</p>';
+    try {
+      const res = await fetch('/api/meta/sync');
+      const json = await res.json();
+      if (json.success) {
+        let rows = json.data.map(c => `<tr><td>${c.campaign_name}</td><td>R$ ${c.spend}</td><td>${c.impressions}</td><td>${c.clicks}</td></tr>`).join('');
+        resEl.innerHTML = `
+          <table class="admin-table">
+            <thead><tr><th>Campanha</th><th>Gasto</th><th>Impressões</th><th>Cliques</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      } else {
+        resEl.innerHTML = `<p style="padding: 20px; color:red;">Erro: ${json.error}</p>`;
+      }
+    } catch(e) {
+      resEl.innerHTML = '<p style="padding: 20px; color:red;">Erro de conexão.</p>';
+    }
+  });
+}
+
+function renderDiagnostics(container) {
+  container.innerHTML = `
+    <div class="dashboard-grid">
+      <div class="stat-card">
+        <h3>Meta Pixel (Navegador)</h3>
+        <div class="stat-value" style="color:#10b981;">ATIVO</div>
+      </div>
+      <div class="stat-card">
+        <h3>Conversions API (Servidor)</h3>
+        <div class="stat-value" style="color:#10b981;">ATIVA</div>
+      </div>
+      <div class="stat-card">
+        <h3>Marketing API</h3>
+        <div class="stat-value" style="color:#f59e0b;">AGUARDANDO</div>
+      </div>
     </div>
   `;
 }

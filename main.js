@@ -8,10 +8,43 @@ import galeria3 from './IMG/GALERIA/galeria-3.webp';
 import galeria4 from './IMG/GALERIA/galeria-4.webp';
 import galeria5 from './IMG/GALERIA/galeria-5.webp';
 
+// Função UUID Generator simples
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
 // Função auxiliar para UTMs e Scoring
 function initTrackingSystem() {
-  // Captura UTMs da URL
+  // Visitor ID (Persistente)
+  let visitorId = getCookie('pf_visitor_id');
+  if (!visitorId) {
+    visitorId = generateUUID();
+    document.cookie = `pf_visitor_id=${visitorId}; path=/; max-age=${60*60*24*365}`;
+  }
+  
+  // Session ID (Por sessão)
+  if (!sessionStorage.getItem('pf_session_id')) {
+    sessionStorage.setItem('pf_session_id', generateUUID());
+  }
+
+  // FBP / FBC
   const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('fbclid')) {
+    const fbclid = urlParams.get('fbclid');
+    document.cookie = `_fbc=fb.1.${Date.now()}.${fbclid}; path=/; max-age=${60*60*24*90}`;
+  }
+
+  // Captura UTMs da URL
   const utms = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
   let currentUtms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
   
@@ -26,11 +59,6 @@ function initTrackingSystem() {
   if (updated) {
     localStorage.setItem('pf_utms', JSON.stringify(currentUtms));
   }
-
-  // Gera Session ID
-  if (!sessionStorage.getItem('pf_session_id')) {
-    sessionStorage.setItem('pf_session_id', 'sess_' + Date.now());
-  }
 }
 
 // Retorna Score atual
@@ -42,117 +70,91 @@ function getLeadScore() {
 function addScore(points) {
   let score = getLeadScore();
   score += points;
+  if (score > 100) score = 100;
   localStorage.setItem('pf_lead_score', score);
 }
 
-// Mock DB Save Event
-function saveEventToDB(eventName, eventData = {}) {
-  const events = JSON.parse(localStorage.getItem('pf_events') || '[]');
-  const utms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
-  const sessionId = sessionStorage.getItem('pf_session_id');
-  
-  events.push({
-    id: Date.now().toString(),
-    date: new Date().toISOString(),
-    eventName,
-    sessionId,
-    url: window.location.pathname,
-    data: { ...eventData, ...utms }
-  });
-  localStorage.setItem('pf_events', JSON.stringify(events));
+function getTemperature(score) {
+  if (score < 40) return 'Frio';
+  if (score < 70) return 'Morno';
+  if (score < 90) return 'Quente';
+  return 'Muito quente';
 }
 
-// Envia evento para a Conversions API (CAPI) do Facebook
-async function sendCAPIEvent(eventName, eventData = {}, eventId) {
-  try {
-    const PIXEL_ID = window.META_PIXEL_ID;
-    const CAPI_TOKEN = window.META_CAPI_TOKEN;
-    
-    if (!PIXEL_ID || !CAPI_TOKEN) return;
-
-    // Converte os dados do Lead para o formato do Facebook se aplicável
-    let userData = {
-      client_user_agent: navigator.userAgent,
-      client_ip_address: "" // IP não está disponível via frontend puro
-    };
-
-    if (eventName === 'Lead' && eventData.email) {
-      // Idealmente deve ser feito hash SHA256 no frontend, 
-      // mas como é estático, o FB vai exigir hash se enviarmos.
-      // Omitido para simplicidade da CAPI Frontend, o PIXEL fará o matching principal.
-    }
-
-    const payload = {
-      data: [{
-        event_name: eventName,
-        event_time: Math.floor(Date.now() / 1000),
-        event_id: eventId,
-        action_source: 'website',
-        event_source_url: window.location.href,
-        user_data: userData,
-        custom_data: eventData
-      }]
-    };
-
-    await fetch(`https://graph.facebook.com/v19.0/${PIXEL_ID}/events?access_token=${CAPI_TOKEN}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-    console.log(`[CAPI] Evento ${eventName} enviado com sucesso!`);
-  } catch (err) {
-    console.error('[CAPI] Erro ao enviar evento:', err);
-  }
-}
-
-// Save Lead to DB
-export function saveLeadToDB(leadData) {
-  const leads = JSON.parse(localStorage.getItem('pf_leads') || '[]');
-  const utms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
-  
-  leads.push({
-    id: Date.now().toString(),
-    date: new Date().toISOString(),
-    ...leadData,
-    ...utms,
-    score: getLeadScore()
-  });
-  
-  localStorage.setItem('pf_leads', JSON.stringify(leads));
-}
-
-// Função auxiliar para tracking
+// Função auxiliar para tracking unificado
 function trackEvent(eventName, eventData = {}) {
   // Score System
   if (eventName === 'PageView') addScore(5);
-  if (eventName === 'Scroll50') addScore(10);
-  if (eventName === 'Scroll100') addScore(20);
-  if (eventName === 'InstagramClick') addScore(15);
+  if (eventName === 'Scroll25') addScore(5);
+  if (eventName === 'Scroll50') addScore(5);
+  if (eventName === 'Scroll75') addScore(10);
+  if (eventName === 'Scroll100') addScore(10);
+  if (eventName === 'Time30') addScore(5);
+  if (eventName === 'Time60') addScore(10);
   if (eventName === 'WhatsappClick') addScore(30);
-  if (eventName === 'FormStart') addScore(40);
-  if (eventName === 'Lead') addScore(100);
+  if (eventName === 'Lead') addScore(40);
 
   // Push to DataLayer
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({ event: eventName, ...eventData });
   
-  // Push to Meta Pixel
-  const eventId = Date.now().toString() + Math.random().toString().substring(2, 8); // deduplication id
+  // Geração do event_id para deduplicação
+  const eventId = generateUUID();
+  const utms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
+  const metadata = { ...eventData, ...utms, score: getLeadScore(), temperature: getTemperature(getLeadScore()) };
+
+  // 1. Enviar para Meta Pixel (Browser)
   if (typeof fbq === 'function') {
-    if (eventName === 'PageView' || eventName === 'ViewContent' || eventName === 'Lead') {
+    if (eventName === 'PageView' || eventName === 'ViewContent' || eventName === 'Lead' || eventName === 'Contact') {
       fbq('track', eventName, eventData, { eventID: eventId });
     } else {
       fbq('trackCustom', eventName, eventData, { eventID: eventId });
     }
   }
 
-  // Enviar para CAPI
-  sendCAPIEvent(eventName, eventData, eventId);
+  // 2. Enviar para Servidor CAPI e Banco de Dados (API Server-Side)
+  fetch('/api/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      eventId,
+      eventName,
+      visitorId: getCookie('pf_visitor_id'),
+      sessionId: sessionStorage.getItem('pf_session_id'),
+      url: window.location.href,
+      metadata,
+      fbp: getCookie('_fbp'),
+      fbc: getCookie('_fbc')
+    })
+  }).catch(err => console.error('[Tracking Error]', err));
   
-  // Save to Admin Panel DB
-  saveEventToDB(eventName, eventData);
   console.log(`[Tracking] ${eventName} | Score: ${getLeadScore()}`);
+}
+
+// Save Lead to DB (Server-Side)
+export async function saveLeadToDB(leadData) {
+  const utms = JSON.parse(localStorage.getItem('pf_utms') || '{}');
+  const score = getLeadScore();
+  
+  try {
+    await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        visitorId: getCookie('pf_visitor_id'),
+        name: leadData.name || '',
+        email: leadData.email || '',
+        phone: leadData.phone || leadData.whatsapp || '',
+        source: utms.utm_source || 'orgânico',
+        medium: utms.utm_medium || '',
+        campaign: utms.utm_campaign || '',
+        score: score,
+        temperature: getTemperature(score)
+      })
+    });
+  } catch (err) {
+    console.error('Falha ao salvar lead', err);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -167,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFAQ();
   initWeb3Forms();
   initScrollTracking();
+  initTimeTracking();
   
   trackEvent('PageView');
 });
@@ -473,5 +476,22 @@ function initScrollTracking() {
         trackEvent(`Scroll${depth}`);
       }
     });
+  });
+}
+
+// 9. Time on Page Tracking
+function initTimeTracking() {
+  const timers = [
+    { time: 30000, event: 'Time30', fired: false },
+    { time: 60000, event: 'Time60', fired: false }
+  ];
+
+  timers.forEach(t => {
+    setTimeout(() => {
+      if (!t.fired) {
+        t.fired = true;
+        trackEvent(t.event);
+      }
+    }, t.time);
   });
 }

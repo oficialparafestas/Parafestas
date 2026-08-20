@@ -16,25 +16,42 @@
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
-      <div class="sidebar-header">Parafestas Admin</div>
+      <div class="sidebar-header">Parafestas Centro</div>
       <nav class="sidebar-nav">
         <a href="#" class="nav-item active" data-view="dashboard">Dashboard</a>
-        <a href="#" class="nav-item" data-view="leads">Leads & Contatos</a>
-        <a href="#" class="nav-item" data-view="crm">CRM (Planilha)</a>
-        <a href="#" class="nav-item" data-view="analytics">Analytics & Eventos</a>
-        <a href="#" class="nav-item" data-view="config" id="nav-config">Configurações</a>
+        <a href="#" class="nav-item" data-view="analytics">Analytics Executivo</a>
+        <a href="#" class="nav-item" data-view="crm">Leads / CRM</a>
+        <a href="#" class="nav-item" data-view="funil">Funil de Conversão</a>
+        <a href="#" class="nav-item" data-view="vendas">Vendas</a>
+        <a href="#" class="nav-item" data-view="campanhas">Campanhas</a>
+        <a href="#" class="nav-item" data-view="meta_ads">Meta Ads</a>
+        <a href="#" class="nav-item" data-view="pixel_api">Pixel & API</a>
+        <a href="#" class="nav-item" data-view="financeiro">Financeiro</a>
+        <a href="#" class="nav-item" data-view="logs">Logs</a>
+        <a href="#" class="nav-item" data-view="config">Configurações</a>
       </nav>
       <div class="sidebar-footer">
-        <span id="user-role" style="color: var(--admin-text-light); font-size: 12px;"></span>
+        <a href="#" class="nav-item logout-btn" id="logout-btn">Sair</a>
       </div>
     </aside>
 
     <main class="admin-main">
       <header class="admin-header">
-        <h2 id="page-title">Dashboard</h2>
-        <div class="header-user">
-          <span id="user-email"></span>
-          <button class="logout-btn" id="logout-btn">Sair</button>
+        <h2 id="page-title">Centro de Comando Parafestas</h2>
+        <div class="header-filters">
+          <select id="date-filter" class="admin-select">
+            <option value="hoje">Hoje</option>
+            <option value="ontem">Ontem</option>
+            <option value="7d">Últimos 7 dias</option>
+            <option value="14d">Últimos 14 dias</option>
+            <option value="30d" selected>Últimos 30 dias</option>
+            <option value="este_mes">Este mês</option>
+            <option value="mes_anterior">Mês anterior</option>
+            <option value="tudo">Todo período</option>
+          </select>
+        </div>
+        <div class="header-status">
+          <span class="status-indicator"></span> <span id="sync-status">Atualizado agora</span>
         </div>
       </header>
 
