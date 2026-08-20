@@ -224,6 +224,28 @@ app.get('/api/meta/sync', authenticateToken, async (req, res) => {
 });
 
 // ==========================================
+// SERVIR FRONTEND ESTÁTICO (PRODUÇÃO)
+// ==========================================
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve arquivos da pasta /dist (gerada pelo Vite)
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Redireciona qualquer rota /admin/* para o painel admin (SPA)
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/admin/index.html'));
+});
+
+// Redireciona qualquer outra rota para o site principal (Landing Page)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+// ==========================================
 // INICIALIZAÇÃO
 // ==========================================
 initDb().then(() => {
